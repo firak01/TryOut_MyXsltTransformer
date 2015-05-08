@@ -19,10 +19,13 @@ import javax.xml.transform.stream.StreamSource;
 
 public class XmlTransformer {
 	private String sDirectoryXmlSource=null;
-	private String sDirectoryXsltOutput=null;
+	private String sDirectoryXsltSource=null;
+	private String sDirectoryOutput=null;
 	
-	public XmlTransformer(String sDirectoryXPage)throws Exception{	
-		this.setDirectoryXmlSource(sDirectoryXPage);
+	public XmlTransformer(String sDirectoryXmlSource, String sDirectoryXsltSource, String sDirectoryOutput)throws Exception{	
+		this.setDirectoryXmlSource(sDirectoryXmlSource);
+		this.setDirectoryXsltSource(sDirectoryXsltSource);
+		this.setDirectoryOutput(sDirectoryOutput);
 	}
 	
 	public boolean start() throws Exception{
@@ -34,19 +37,19 @@ public class XmlTransformer {
 
 			//HIER absolute Verzeichnisse verwenden			
 			//### Setup directories			
-			File fileDirXPage = new File(this.getDirectoryXmlSource());
+			File fileDirXmlSource = new File(this.getDirectoryXmlSource());
 			String sP = new String(this.getDirectoryXmlSource());
 			
 			FileSystemView objFileSystem = FileSystemView.getFileSystemView();
-			File[] fileaXPage = objFileSystem.getFiles(fileDirXPage, false); 
+			File[] fileaXmlSource = objFileSystem.getFiles(fileDirXmlSource, false); 
 			
 		
-			if(null == fileaXPage) break main;
-			if(fileaXPage.length==0) break main;
+			if(null == fileaXmlSource) break main;
+			if(fileaXmlSource.length==0) break main;
 			
 			//Get styles			
-			File fileDirParent = new File(sP.substring(0, sP.lastIndexOf(System.getProperty("file.separator"))));
-			File fileDirStyle = new File(fileDirParent, "xsltInput");
+			//Hole das Parent Directory aus einem DateiPfadString:      File fileDirParent = new File(sP.substring(0, sP.lastIndexOf(System.getProperty("file.separator"))));
+			File fileDirStyle = new File(this.getDirectoryXsltSource());
 			File[] fileaStyle = objFileSystem.getFiles(fileDirStyle, false);
 			
 			//#####################################################
@@ -70,11 +73,13 @@ public class XmlTransformer {
 		
 			
 			//#################################
-			//The Results
-			FileUtils.deleteDirectory(new File(fileDirParent, "xmlOutput"));
-			File fileDirOut = new File(fileDirParent, "xmlOutput");
+			//The Results			
+			File fileDirOutToDelete = new File(this.getDirectoryOutput());
+			FileUtils.deleteDirectory(fileDirOutToDelete);
+			
+			File fileDirOut = new File(this.getDirectoryOutput());
 			fileDirOut.mkdirs();
-			this.setDirectoryOutput(fileDirOut.getAbsolutePath());
+			//this.setDirectoryOutput(fileDirOut.getAbsolutePath());
 		
 		
 			//... step - Directories
@@ -92,7 +97,7 @@ public class XmlTransformer {
 			boolean bResult = false;
 			for(File fileStyle : fileaStyleOnly){
 				iRun++;
-				bResult = this.transformFilesOnStyle(fileStyle, fileaXPage, iRun);
+				bResult = this.transformFilesOnStyle(fileStyle, fileaXmlSource, iRun);
 				if(bResult==false) break main;
 			}
 			
@@ -215,10 +220,31 @@ public class XmlTransformer {
 		this.sDirectoryXmlSource = sDirectory;
 	}
 	
-	public String getDirectoryOutput(){
-		return this.sDirectoryXsltOutput;
+	public String getDirectoryXsltSource(){
+		return this.sDirectoryXsltSource;
 	}
-	public void setDirectoryOutput(String sDirectory){
-		this.sDirectoryXsltOutput = sDirectory;
+	public void setDirectoryXsltSource(String sDirectory)throws Exception{
+		if(sDirectory==null)throw new Exception("Directory must not be null.");
+		if(sDirectory.equals("")) throw new Exception("Directoy must not be empty.");
+		
+		File file = new File(sDirectory);
+		if(file.exists()==false) throw new Exception("Directoy does not exist: '" + file.getAbsolutePath() + "'");
+		if(file.isDirectory()==false)throw new Exception("This is not a directory: '" + file.getAbsolutePath() + "'");
+		this.sDirectoryXsltSource = sDirectory;
+	}
+	
+	public String getDirectoryOutput(){
+		return this.sDirectoryOutput;
+	}
+	public void setDirectoryOutput(String sDirectory)throws Exception{
+		if(sDirectory==null)throw new Exception("Directory must not be null.");
+		if(sDirectory.equals("")) throw new Exception("Directoy must not be empty.");
+		
+//Anders als bei den Input Verzeichnissen wird noch nicht auf Vorhandensein des Verzeichnises geprüft. Das Verzeichnis wird bei der Transformation angelegt.
+//		File file = new File(sDirectory);
+//		if(file.exists()==false) throw new Exception("Directoy does not exist: '" + file.getAbsolutePath() + "'");
+//		if(file.isDirectory()==false)throw new Exception("This is not a directory: '" + file.getAbsolutePath() + "'");
+//		
+		this.sDirectoryOutput = sDirectory;
 	}
 }
